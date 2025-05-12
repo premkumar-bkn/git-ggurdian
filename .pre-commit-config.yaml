@@ -1,0 +1,13 @@
+# repos:
+#   - repo: https://github.com/Yelp/detect-secrets
+#     rev: v1.4.0  # or latest stable version
+#     hooks:
+#       - id: detect-secrets
+#         args: ["--baseline", ".secrets.baseline"]
+
+repos:
+  - repo: https://github.com/GitGuardian/ggshield
+    rev: v1.21.0  # Use the latest stable version from https://github.com/GitGuardian/ggshield/releases
+    hooks:
+      - id: ggshield
+
