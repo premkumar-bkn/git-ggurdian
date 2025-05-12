@@ -6,8 +6,11 @@
 #         args: ["--baseline", ".secrets.baseline"]
 
 repos:
-  - repo: https://github.com/GitGuardian/ggshield
-    rev: v1.21.0  # Use the latest stable version from https://github.com/GitGuardian/ggshield/releases
+  - repo: https://github.com/gitguardian/ggshield
+    rev: v1.39.0
     hooks:
-      - id: ggshield
-
+      - id: ggshield-push
+        language_version: python3
+        stages:
+          - pre-commit
+        args: ["scan", "pre-commit"]
