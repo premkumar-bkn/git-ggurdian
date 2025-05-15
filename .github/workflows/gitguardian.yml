@@ -22,7 +22,35 @@ jobs:
       - name: Install GitGuardian CLI
         run: pip install ggshield
 
-      - name: Run GitGuardian Scan
+      - name: Run GitGuardian and post PR comment if secrets found
         env:
           GITGUARDIAN_API_KEY: ${{ secrets.GG_API_KEY }}
-        run: ggshield secret scan ci
+          GH_PAT: ${{ secrets.GH_TOKEN }}
+        run: |
+          echo "🔍 Running GitGuardian secret scan..."
+          set +e
+          output=$(ggshield secret scan ci 2>&1)
+          exit_code=$?
+          set -e
+
+          # Strip ANSI escape sequences using Perl
+          clean_output=$(echo "$output" | perl -pe 's/\e\[[0-9;]*[mK]//g')
+
+          echo "$clean_output"
+
+          if [ $exit_code -ne 0 ]; then
+            echo "❌ GitGuardian scan failed - secrets detected."
+
+            pr_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+
+            # Escape double quotes and newlines for JSON payload
+            json_body=$(printf "%s" "$clean_output" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+
+            curl -s -X POST \
+              -H "Authorization: token $GH_PAT" \
+              -H "Content-Type: application/json" \
+              -d "{\"body\": \"🚨 **GitGuardian Secret Scan Failed**\\n\\n\`\`\`\\n$json_body\\n\`\`\`\"}" \
+              "https://api.github.com/repos/${{ github.repository }}/issues/${pr_number}/comments"
+
+            exit 1
+          fi
