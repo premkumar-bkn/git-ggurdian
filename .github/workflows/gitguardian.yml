@@ -9,6 +9,7 @@ on:
 jobs:
   secret-scan:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -20,13 +21,6 @@ jobs:
 
       - name: Install GitGuardian CLI
         run: pip install ggshield
-
-      - name: Debug PAT presence
-        run: |
-          echo "Length of GH_PAT: ${#GH_PAT}"
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
 
       - name: Run GitGuardian and post PR comment if secrets found
         env:
@@ -46,14 +40,19 @@ jobs:
 
             pr_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
 
-            comment_body=$(echo "$output" | sed 's/"/\\"/g' | sed 's/$/\\n/' | tr -d '\n')
+            # Escape output for JSON
+            body=$(jq -Rs <<< "$output")
+
+            # Prepare JSON payload
+            json_payload=$(jq -n \
+              --arg body "🚨 **GitGuardian Secret Scan Failed**\n\n\`\`\`\n$output\n\`\`\`" \
+              '{body: $body}')
+
             curl -s -X POST \
               -H "Authorization: token $GH_PAT" \
               -H "Content-Type: application/json" \
-              -d "{\"body\": \"🚨 **GitGuardian Secret Scan Failed**\\n\\n\`\`\`\\n$output\\n\`\`\`\"}" \
+              -d "$json_payload" \
               "https://api.github.com/repos/${{ github.repository }}/issues/${pr_number}/comments"
 
             exit 1
           fi
-
-
