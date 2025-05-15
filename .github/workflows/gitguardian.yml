@@ -25,13 +25,13 @@ jobs:
         run: |
           echo "Length of GH_PAT: ${#GH_PAT}"
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
 
       - name: Run GitGuardian and post PR comment if secrets found
         env:
           GITGUARDIAN_API_KEY: ${{ secrets.GG_API_KEY }}
-          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_PAT: ${{ secrets.GH_TOKEN }}
         run: |
           echo "🔍 Running GitGuardian secret scan..."
           set +e
