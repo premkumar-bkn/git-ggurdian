@@ -21,6 +21,13 @@ jobs:
       - name: Install GitGuardian CLI
         run: pip install ggshield
 
+      - name: Debug PAT presence
+        run: |
+          echo "Length of GH_PAT: ${#GH_PAT}"
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+
+
       - name: Run GitGuardian and post PR comment if secrets found
         env:
           GITGUARDIAN_API_KEY: ${{ secrets.GG_API_KEY }}
